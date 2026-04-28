@@ -34,7 +34,7 @@
         
         body { background-color: #050505; color: #F8F9FA; overflow: hidden; }
         
-        /* Utilitários de Efeito Vidro e Animações (Otimizados) */
+        /* Utilitários de Efeito Vidro e Animações */
         .glass-effect {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(16px);
@@ -50,6 +50,11 @@
             box-shadow: 0 10px 40px -10px rgba(255,255,255,0.15);
             background: rgba(255, 255, 255, 0.1);
         }
+
+        /* Toggle Customizado */
+        .toggle-checkbox:checked { right: 0; border-color: #CCFF00; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #CCFF00; }
+        .toggle-checkbox:checked + .toggle-label:after { transform: translateX(100%); border-color: white; }
     </style>
 </head>
 <body>
@@ -58,7 +63,7 @@
     <script type="text/babel">
         const { useState, useEffect, memo, useCallback, useRef } = React;
 
-        // --- SISTEMA DE ÍCONES NATIVO (Syntax corrigida para React fragmentos) ---
+        // --- SISTEMA DE ÍCONES NATIVO ---
         const Icon = ({ name, size = 24, className = "", strokeWidth = 2 }) => {
             const icons = {
                 zap: <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />,
@@ -80,7 +85,8 @@
                 help: <><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,
                 settings: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,
                 plus: <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>,
-                trash: <><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>
+                trash: <><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>,
+                whatsapp: <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
             };
             return (
                 <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -89,7 +95,6 @@
             );
         };
 
-        // --- LÓGICA DE CONTRASTE WCAG ---
         const getContrastColor = (hexColor) => {
             if (!hexColor) return '#000000';
             const hex = hexColor.replace('#', '');
@@ -100,32 +105,33 @@
             return yiq >= 128 ? '#000000' : '#FFFFFF'; 
         };
 
-        // --- DIRETRIZ TIPOGRÁFICA ---
+        // --- NEURO-TIPOGRAFIA: Foco em Retenção e Conversão ---
         const TITLE_FONTS = [
-            { id: 'playfair', name: 'Playfair Display', format: 'Serifada Clássica', family: '"Playfair Display", serif' },
-            { id: 'cinzel', name: 'Cinzel', format: 'Serifada Imponente', family: '"Cinzel", serif' },
-            { id: 'montserrat', name: 'Montserrat', format: 'Sans Geométrica', family: '"Montserrat", sans-serif' },
-            { id: 'bebas', name: 'Bebas Neue', format: 'Display Urbana', family: '"Bebas Neue", impact, sans-serif' },
-            { id: 'inter', name: 'Inter Tight', format: 'Sans Tecnológica', family: '"Inter", sans-serif' },
-            { id: 'cormorant', name: 'Cormorant', format: 'Serifada Editorial', family: '"Cormorant Garamond", serif' },
+            { id: 'cinzel', name: 'Cinzel', format: 'Imponente', neuro: 'Foco em Alto Ticket', family: '"Cinzel", serif' },
+            { id: 'playfair', name: 'Playfair Display', format: 'Serifada Clássica', neuro: 'Percepção de Luxo', family: '"Playfair Display", serif' },
+            { id: 'montserrat', name: 'Montserrat', format: 'Geométrica', neuro: 'Leitura Imersiva', family: '"Montserrat", sans-serif' },
+            { id: 'inter', name: 'Inter Tight', format: 'Tecnológica', neuro: 'Conexão Moderna', family: '"Inter", sans-serif' },
+            { id: 'bebas', name: 'Bebas Neue', format: 'Urbana', neuro: 'Impacto Direto', family: '"Bebas Neue", impact, sans-serif' },
+            { id: 'cormorant', name: 'Cormorant', format: 'Editorial', neuro: 'Elegância Fina', family: '"Cormorant Garamond", serif' },
         ];
 
         const DESC_FONTS = [
-            { id: 'inter', name: 'Inter', format: 'Alta Legibilidade', family: '"Inter", sans-serif' },
-            { id: 'lato', name: 'Lato', format: 'Arredondada', family: '"Lato", sans-serif' },
-            { id: 'roboto', name: 'Roboto', format: 'Técnica/Neutra', family: '"Roboto", sans-serif' },
-            { id: 'lora', name: 'Lora', format: 'Serifada Suave', family: '"Lora", serif' },
+            { id: 'montserrat', name: 'Montserrat', format: 'Avançada', neuro: 'Maior Retenção', family: '"Montserrat", sans-serif' },
+            { id: 'inter', name: 'Inter', format: 'Legibilidade', neuro: 'Leitura Fluida', family: '"Inter", sans-serif' },
+            { id: 'lato', name: 'Lato', format: 'Arredondada', neuro: 'Proximidade', family: '"Lato", sans-serif' },
+            { id: 'lora', name: 'Lora', format: 'Suave', neuro: 'Conforto Visual', family: '"Lora", serif' },
         ];
 
-        const PAGE_MODULES = [
-            { id: 'banner', label: 'Banner de Oferta Exclusiva', icon: 'zap' },
-            { id: 'about', label: 'Conceito / O Espaço', icon: 'users' },
-            { id: 'gallery', label: 'Portfólio de Resultados', icon: 'image' },
-            { id: 'testimonials', label: 'Selo de Autoridade', icon: 'message' },
-            { id: 'faq', label: 'FAQ Estratégico', icon: 'help' },
+        // --- ARQUITETURA DE FUNIL ---
+        const FUNNEL_MODULES = [
+            { id: 'banner', stage: 'topo', label: 'Banner de Oferta Exclusiva', desc: 'Atração imediata e Captura de Leads.', icon: 'zap' },
+            { id: 'about', stage: 'meio', label: 'Conceito / O Espaço', desc: 'Gera conexão e percepção de valor.', icon: 'users' },
+            { id: 'gallery', stage: 'meio', label: 'Portfólio de Resultados', desc: 'Prova visual da sua autoridade.', icon: 'image' },
+            { id: 'testimonials', stage: 'fundo', label: 'Selo de Autoridade', desc: 'Prova social para quebra de objeções.', icon: 'message' },
+            { id: 'faq', stage: 'fundo', label: 'FAQ Estratégico', desc: 'Elimina dúvidas finais antes da compra.', icon: 'help' },
         ];
 
-        // URLs Estáticas Estilo Dark Tech para Imagens Repetitivas
+        // URLs Estáticas
         const IMG_HERO = "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&w=800&q=80"; 
         const IMG_SERVICE_1 = "https://images.unsplash.com/photo-1599305090598-fe179d501227?auto=format&fit=crop&w=400&q=80"; 
         const IMG_SERVICE_2 = "https://images.unsplash.com/photo-1517520286536-160b73df784b?auto=format&fit=crop&w=400&q=80"; 
@@ -133,7 +139,6 @@
         const IMG_GALLERY_2 = "https://images.unsplash.com/photo-1587314168485-3236d6710814?auto=format&fit=crop&w=300&q=80";
         const IMG_GALLERY_3 = "https://images.unsplash.com/photo-1507652313651-74ff74d3c8fa?auto=format&fit=crop&w=300&q=80";
 
-        // --- MINI MOCKUPS PARA ESCOLHA DE LAYOUT ---
         const MiniLayoutWireframe = ({ type, color }) => {
             return (
                 <div className="w-16 h-12 bg-zinc-950 border border-zinc-800 rounded-md overflow-hidden flex p-1.5 gap-1.5 shrink-0 transition-all">
@@ -175,9 +180,8 @@
             );
         };
 
-        // --- MOCKUP OMNICHANNEL ---
         const ImmersiveMockup = memo(({ formData, viewMode }) => {
-            const { primaryColor, secondaryColor, accentColor, surfaceColor, titleFont, descFont, heroStyle, sections, services } = formData;
+            const { primaryColor, secondaryColor, accentColor, surfaceColor, titleFont, descFont, heroStyle, sections, services, showWhatsapp } = formData;
             const buttonTextColor = getContrastColor(secondaryColor);
             const desktopRef = useRef(null);
             const mobileRef = useRef(null);
@@ -188,7 +192,7 @@
                 } else if (viewMode === 'mobile' && mobileRef.current) {
                 mobileRef.current.scrollTo({ top: mobileRef.current.scrollHeight, behavior: 'smooth' });
                 }
-            }, [sections, viewMode, services, heroStyle]);
+            }, [sections, viewMode, services, heroStyle, showWhatsapp]);
 
             const titleFontFamily = TITLE_FONTS.find(f => f.id === titleFont)?.family || 'sans-serif';
             const descFontFamily = DESC_FONTS.find(f => f.id === descFont)?.family || 'sans-serif';
@@ -211,6 +215,14 @@
                     </div>
 
                     <div ref={desktopRef} className="flex-1 overflow-y-auto no-scrollbar relative transition-colors duration-500 scroll-smooth" style={{ backgroundColor: primaryColor }}>
+                        
+                        {/* WPP FLUTUANTE DESKTOP */}
+                        {showWhatsapp && (
+                            <div className="fixed bottom-6 right-6 w-12 h-12 rounded-full flex items-center justify-center shadow-xl z-50 glass-button cursor-pointer hover:scale-110" style={{ backgroundColor: '#25D366' }}>
+                                <Icon name="whatsapp" size={24} className="text-white" />
+                            </div>
+                        )}
+
                         <header className="flex justify-between items-center px-16 py-8 opacity-90">
                         <div className="font-black text-xl uppercase tracking-tighter truncate max-w-[30%]" style={{ color: surfaceColor, fontFamily: titleFontFamily }}>
                             {formData.nome || 'SUA_MARCA'} <span style={{ color: accentColor }}>.</span>
@@ -223,67 +235,81 @@
                         </div>
                         </header>
 
-                        {/* HERO SECTION */}
+                        {/* HERO SECTION DESKTOP */}
                         <div className="px-16 py-12 flex items-center min-h-[350px]">
                         {heroStyle === 'classic-left' && (
                             <div className="flex w-full gap-12 items-center">
-                            <div className="w-1/2 flex flex-col items-start text-left">
-                                <div className="h-1.5 w-16 mb-6 rounded-full transition-colors duration-700" style={{ backgroundColor: accentColor }} />
-                                <h5 className="text-5xl leading-[1.1] font-black tracking-tighter uppercase mb-6 drop-shadow-lg" style={{ color: surfaceColor, fontFamily: titleFontFamily }}>
-                                {formData.nome || 'Seu'} <br/> <span className="transition-colors duration-700" style={{ color: accentColor }}>{formData.nicho || 'Posicionamento'}</span>
-                                </h5>
-                                <div className="space-y-3 w-4/5 opacity-70 mb-10 text-sm font-light leading-relaxed" style={{ color: surfaceColor, fontFamily: descFontFamily }}>
-                                A excelência do seu espaço físico traduzida em uma experiência digital imersiva. Descubra a nossa assinatura.
+                                <div className="w-1/2 flex flex-col items-start text-left max-w-full">
+                                    <div className="h-1.5 w-16 mb-6 rounded-full transition-colors duration-700" style={{ backgroundColor: accentColor }} />
+                                    <h5 className="text-5xl lg:text-[3.5rem] leading-[1.0] font-black tracking-tighter uppercase mb-3 drop-shadow-lg break-words w-full" style={{ color: surfaceColor, fontFamily: titleFontFamily }}>
+                                        {formData.nome || 'Sua Assinatura'}
+                                    </h5>
+                                    <div className="text-sm lg:text-base uppercase tracking-widest mb-6 font-light transition-colors duration-700 break-words w-full" style={{ color: accentColor, fontFamily: descFontFamily }}>
+                                        {formData.nicho || 'SEU POSICIONAMENTO AQUI'}
+                                    </div>
+                                    <div className="space-y-3 w-4/5 opacity-70 mb-10 text-sm font-light leading-relaxed" style={{ color: surfaceColor, fontFamily: descFontFamily }}>
+                                        A excelência do seu espaço físico traduzida em uma experiência digital imersiva. Descubra a nossa assinatura.
+                                    </div>
+                                    <div className="h-14 px-10 rounded-lg flex items-center justify-center text-xs font-black tracking-[0.2em] uppercase cursor-pointer glass-button" style={{ backgroundColor: secondaryColor, color: buttonTextColor, fontFamily: descFontFamily }}>
+                                        Agendar Experiência
+                                    </div>
                                 </div>
-                                <div className="h-14 px-10 rounded-lg flex items-center justify-center text-xs font-black tracking-[0.2em] uppercase cursor-pointer glass-button" style={{ backgroundColor: secondaryColor, color: buttonTextColor, fontFamily: descFontFamily }}>
-                                Agendar Experiência
-                                </div>
-                            </div>
-                            <div className="w-1/2 h-72 rounded-2xl opacity-80 border border-white/5 bg-cover bg-center shadow-2xl" style={{ backgroundImage: `url(${IMG_HERO})` }} />
+                                <div className="w-1/2 h-72 rounded-2xl opacity-80 border border-white/5 bg-cover bg-center shadow-2xl shrink-0" style={{ backgroundImage: `url(${IMG_HERO})` }} />
                             </div>
                         )}
 
                         {heroStyle === 'centered-impact' && (
-                            <div className="w-full flex flex-col items-center text-center justify-center">
-                            <div className="h-1.5 w-16 mb-6 rounded-full transition-colors duration-700" style={{ backgroundColor: accentColor }} />
-                            <h5 className="text-6xl leading-[1.1] font-black tracking-tighter uppercase mb-6 drop-shadow-lg" style={{ color: surfaceColor, fontFamily: titleFontFamily }}>
-                                {formData.nome || 'Seu'} <br/><span className="transition-colors duration-700" style={{ color: accentColor }}>{formData.nicho || 'Posicionamento'}</span>
-                            </h5>
-                            <div className="space-y-3 w-1/2 mx-auto opacity-70 mb-10 text-sm font-light leading-relaxed" style={{ color: surfaceColor, fontFamily: descFontFamily }}>
-                                A excelência do seu espaço físico traduzida em uma experiência digital imersiva.
-                            </div>
-                            <div className="h-16 px-12 rounded-2xl flex items-center justify-center text-xs font-black tracking-[0.2em] uppercase cursor-pointer glass-button" style={{ backgroundColor: secondaryColor, color: buttonTextColor, fontFamily: descFontFamily }}>
-                                Agendar Experiência
-                            </div>
+                            <div className="w-full flex flex-col items-center text-center justify-center max-w-full px-8">
+                                <div className="h-1.5 w-16 mb-6 rounded-full transition-colors duration-700" style={{ backgroundColor: accentColor }} />
+                                <h5 className="text-5xl lg:text-6xl leading-[1.0] font-black tracking-tighter uppercase mb-4 drop-shadow-lg break-words w-full" style={{ color: surfaceColor, fontFamily: titleFontFamily }}>
+                                    {formData.nome || 'Sua Assinatura'}
+                                </h5>
+                                <div className="text-base lg:text-lg uppercase tracking-widest mb-6 font-light transition-colors duration-700 break-words w-full" style={{ color: accentColor, fontFamily: descFontFamily }}>
+                                    {formData.nicho || 'SEU POSICIONAMENTO AQUI'}
+                                </div>
+                                <div className="space-y-3 w-3/4 mx-auto opacity-70 mb-10 text-sm font-light leading-relaxed" style={{ color: surfaceColor, fontFamily: descFontFamily }}>
+                                    A excelência do seu espaço físico traduzida em uma experiência digital imersiva.
+                                </div>
+                                <div className="h-16 px-12 rounded-2xl flex items-center justify-center text-xs font-black tracking-[0.2em] uppercase cursor-pointer glass-button" style={{ backgroundColor: secondaryColor, color: buttonTextColor, fontFamily: descFontFamily }}>
+                                    Agendar Experiência
+                                </div>
                             </div>
                         )}
 
                         {heroStyle === 'split-screen' && (
                             <div className="flex w-full h-[350px] rounded-3xl overflow-hidden border border-white/5 shadow-2xl">
-                            <div className="w-1/2 h-full opacity-80 flex items-end p-8 bg-cover bg-center transition-all duration-700" style={{ borderLeft: `6px solid ${accentColor}`, backgroundImage: `url(${IMG_HERO})` }}>
-                            </div>
-                            <div className="w-1/2 h-full flex flex-col justify-center p-12 bg-black/40 backdrop-blur-md">
-                                <h5 className="text-4xl leading-[1.1] font-black tracking-tighter uppercase mb-6 drop-shadow-md" style={{ color: surfaceColor, fontFamily: titleFontFamily }}>
-                                A Essência <br/><span className="transition-colors duration-700" style={{ color: accentColor }}>{formData.nicho || 'Premium'}</span>
-                                </h5>
-                                <div className="h-14 w-56 rounded-lg flex items-center justify-center text-[10px] font-black tracking-[0.2em] uppercase mt-6 cursor-pointer glass-button" style={{ backgroundColor: secondaryColor, color: buttonTextColor, fontFamily: descFontFamily }}>
-                                Iniciar Atendimento
+                                <div className="w-1/2 h-full opacity-80 flex items-end p-8 bg-cover bg-center transition-all duration-700" style={{ borderLeft: `6px solid ${accentColor}`, backgroundImage: `url(${IMG_HERO})` }}>
                                 </div>
-                            </div>
+                                <div className="w-1/2 h-full flex flex-col justify-center p-12 bg-black/40 backdrop-blur-md max-w-full">
+                                    <h5 className="text-4xl lg:text-5xl leading-[1.0] font-black tracking-tighter uppercase mb-3 drop-shadow-md break-words w-full" style={{ color: surfaceColor, fontFamily: titleFontFamily }}>
+                                        {formData.nome || 'Sua Assinatura'}
+                                    </h5>
+                                    <div className="text-xs lg:text-sm uppercase tracking-widest font-light transition-colors duration-700 break-words w-full" style={{ color: accentColor, fontFamily: descFontFamily }}>
+                                        {formData.nicho || 'SEU POSICIONAMENTO AQUI'}
+                                    </div>
+                                    <div className="h-14 w-56 rounded-lg flex items-center justify-center text-[10px] font-black tracking-[0.2em] uppercase mt-8 cursor-pointer glass-button" style={{ backgroundColor: secondaryColor, color: buttonTextColor, fontFamily: descFontFamily }}>
+                                        Iniciar Atendimento
+                                    </div>
+                                </div>
                             </div>
                         )}
 
                         {heroStyle === 'immersive-bottom' && (
                             <div className="w-full h-[400px] rounded-3xl relative overflow-hidden flex items-end p-12 opacity-90 bg-cover bg-center shadow-2xl border border-white/5" style={{ backgroundImage: `url(${IMG_HERO})` }}>
-                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-                            <div className="relative z-10 w-full flex justify-between items-end">
-                                <h5 className="text-5xl leading-[1.1] font-black tracking-tighter uppercase drop-shadow-lg" style={{ color: surfaceColor, fontFamily: titleFontFamily }}>
-                                {formData.nome || 'Seu'} <br/><span className="transition-colors duration-700" style={{ color: accentColor }}>{formData.nicho || 'Posicionamento'}</span>
-                                </h5>
-                                <div className="h-16 px-10 rounded-xl flex items-center justify-center text-xs font-black tracking-[0.2em] uppercase cursor-pointer glass-button" style={{ backgroundColor: secondaryColor, color: buttonTextColor, fontFamily: descFontFamily }}>
-                                Agendar Agora
+                                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+                                <div className="relative z-10 w-full flex justify-between items-end gap-6">
+                                    <div className="flex-1 max-w-full">
+                                        <h5 className="text-5xl lg:text-6xl leading-[1.0] font-black tracking-tighter uppercase mb-3 drop-shadow-lg break-words w-full" style={{ color: surfaceColor, fontFamily: titleFontFamily }}>
+                                            {formData.nome || 'Sua Assinatura'}
+                                        </h5>
+                                        <div className="text-sm lg:text-base uppercase tracking-widest font-light transition-colors duration-700 break-words w-full" style={{ color: accentColor, fontFamily: descFontFamily }}>
+                                            {formData.nicho || 'SEU POSICIONAMENTO AQUI'}
+                                        </div>
+                                    </div>
+                                    <div className="h-16 px-10 rounded-xl flex items-center justify-center text-xs font-black tracking-[0.2em] uppercase cursor-pointer glass-button shrink-0" style={{ backgroundColor: secondaryColor, color: buttonTextColor, fontFamily: descFontFamily }}>
+                                        Agendar Agora
+                                    </div>
                                 </div>
-                            </div>
                             </div>
                         )}
                         </div>
@@ -367,6 +393,14 @@
                         </div>
 
                         <div ref={mobileRef} className="flex-1 overflow-y-auto no-scrollbar pb-20 pt-14 lg:pt-16 transition-all duration-1000 scroll-smooth">
+                        
+                        {/* WPP FLUTUANTE MOBILE */}
+                        {showWhatsapp && (
+                            <div className="absolute bottom-6 right-4 w-10 h-10 rounded-full flex items-center justify-center shadow-xl z-50 glass-button cursor-pointer" style={{ backgroundColor: '#25D366' }}>
+                                <Icon name="whatsapp" size={20} className="text-white" />
+                            </div>
+                        )}
+
                         <div className="px-6 lg:px-8 flex flex-col min-h-full">
                             
                             <header className={`flex items-center mb-10 opacity-90 transition-all ${formData.headerStyle === 'logo-center' || heroStyle === 'centered-impact' ? 'justify-center' : 'justify-between'}`}>
@@ -377,17 +411,20 @@
                             </header>
 
                             {/* HERO MOBILE */}
-                            <div className={`flex flex-col ${heroStyle === 'centered-impact' ? 'items-center text-center justify-center' : heroStyle === 'immersive-bottom' ? 'justify-end h-[350px] p-6 rounded-2xl bg-cover bg-center relative shadow-xl' : 'justify-start'}`} style={heroStyle === 'immersive-bottom' ? { backgroundImage: `url(${IMG_HERO})` } : {}}>
+                            <div className={`flex flex-col max-w-full ${heroStyle === 'centered-impact' ? 'items-center text-center justify-center' : heroStyle === 'immersive-bottom' ? 'justify-end h-[350px] p-6 rounded-2xl bg-cover bg-center relative shadow-xl' : 'justify-start'}`} style={heroStyle === 'immersive-bottom' ? { backgroundImage: `url(${IMG_HERO})` } : {}}>
                             
-                            {heroStyle === 'immersive-bottom' && <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent rounded-2xl" />}
+                            {heroStyle === 'immersive-bottom' && <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent rounded-2xl" />}
                             
-                            <div className="relative z-10 w-full flex flex-col">
+                            <div className="relative z-10 w-full flex flex-col max-w-full">
                                 {heroStyle !== 'immersive-bottom' && <div className={`h-1 w-10 mb-5 rounded-full transition-all duration-700 ${heroStyle === 'centered-impact' ? 'mx-auto' : ''}`} style={{ backgroundColor: accentColor }} />}
                                 
-                                <h5 className={`text-3xl leading-[1.1] font-black tracking-tighter uppercase mb-4 drop-shadow-md ${heroStyle === 'immersive-bottom' ? 'text-white' : ''}`} style={{ color: heroStyle === 'immersive-bottom' ? '#FFF' : surfaceColor, fontFamily: titleFontFamily }}>
-                                    {formData.nome || 'Seu'} <br/> 
-                                    <span className="transition-colors duration-700" style={{ color: accentColor }}>{formData.nicho || 'Posicionamento'}</span>
+                                <h5 className={`text-4xl leading-[1.0] font-black tracking-tighter uppercase mb-2 drop-shadow-md break-words w-full ${heroStyle === 'immersive-bottom' ? 'text-white' : ''}`} style={{ color: heroStyle === 'immersive-bottom' ? '#FFF' : surfaceColor, fontFamily: titleFontFamily }}>
+                                    {formData.nome || 'Sua Assinatura'}
                                 </h5>
+                                
+                                <div className={`text-[10px] uppercase tracking-widest mb-6 font-light transition-colors duration-700 break-words w-full ${heroStyle === 'immersive-bottom' ? 'text-white/90' : ''}`} style={{ color: heroStyle === 'immersive-bottom' ? '#FFF' : accentColor, fontFamily: descFontFamily }}>
+                                    {formData.nicho || 'SEU POSICIONAMENTO AQUI'}
+                                </div>
 
                                 {heroStyle !== 'immersive-bottom' && (
                                     <div className="space-y-2 w-full opacity-70 mb-8 text-[10px] font-light leading-relaxed" style={{ color: surfaceColor, fontFamily: descFontFamily }}>
@@ -395,7 +432,7 @@
                                     </div>
                                 )}
 
-                                <div className="w-full">
+                                <div className="w-full mt-2">
                                     <div className="h-12 w-full rounded-xl flex items-center justify-center text-[10px] font-black tracking-[0.2em] uppercase shadow-xl transition-all duration-500 glass-button" style={{ backgroundColor: secondaryColor, color: buttonTextColor, fontFamily: descFontFamily }}>
                                     Agendar Agora
                                     </div>
@@ -480,14 +517,15 @@
             const [formData, setFormData] = useState({
                 nome: '',
                 nicho: '',
-                titleFont: 'playfair',
-                descFont: 'inter',
+                titleFont: 'montserrat',
+                descFont: 'montserrat',
                 primaryColor: '#050505', 
                 secondaryColor: '#FF6B00', 
                 accentColor: '#CCFF00', 
                 surfaceColor: '#F8F9FA', 
                 headerStyle: 'logo-left',
                 heroStyle: 'classic-left',
+                showWhatsapp: true,
                 sections: [],
                 services: [
                     { id: 'initial-1', title: 'Corte Concept', price: '120' },
@@ -515,7 +553,6 @@
                 try { if ('vibrate' in navigator) navigator.vibrate(30); } catch (e) {}
             };
 
-            // BUG FIX: Correção na geração de IDs únicos para prevenir erros no React
             const addService = () => {
                 const newId = Date.now().toString() + Math.random().toString(36).substr(2, 5);
                 setFormData(prev => ({
@@ -649,12 +686,12 @@
                             </div>
 
                             <div className="space-y-3">
-                                <label htmlFor="nicho-input" className="text-[10px] font-black uppercase italic tracking-widest text-zinc-500 block cursor-pointer">Sua Especialidade (Nicho)</label>
+                                <label htmlFor="nicho-input" className="text-[10px] font-black uppercase italic tracking-widest text-zinc-500 block cursor-pointer">Seu Posicionamento (Subtítulo ou Descrição Curta)</label>
                                 <input 
                                     id="nicho-input"
                                     type="text"
-                                    className="w-full bg-zinc-900/40 border border-zinc-800 p-5 rounded-2xl text-lg font-bold text-zinc-100 focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 focus:outline-none placeholder-zinc-700 transition-all uppercase"
-                                    placeholder="Ex: Estúdio de Cílios, Barbearia..."
+                                    className="w-full bg-zinc-900/40 border border-zinc-800 p-5 rounded-2xl text-sm font-bold text-zinc-100 focus:border-lime-400 focus:ring-2 focus:ring-lime-400/30 focus:outline-none placeholder-zinc-700 transition-all uppercase"
+                                    placeholder="Ex: Especialista em Loiras e Visagismo..."
                                     value={formData.nicho}
                                     onChange={(e) => setFormData({...formData, nicho: e.target.value})}
                                 />
@@ -670,60 +707,67 @@
                     {step === 2 && (
                         <div className="space-y-8 lg:space-y-10 animate-in fade-in slide-in-from-right-8 duration-500 pb-20">
                         <div className="space-y-2">
-                            <h3 className="text-3xl lg:text-4xl font-black uppercase italic tracking-tighter text-zinc-100">02. Identidade</h3>
-                            <p className="text-zinc-400 text-xs lg:text-sm italic">Defina as cores e a voz tipográfica da sua marca.</p>
+                            <h3 className="text-3xl lg:text-4xl font-black uppercase italic tracking-tighter text-zinc-100">02. Identidade Visual</h3>
+                            <p className="text-zinc-400 text-xs lg:text-sm italic">Defina as cores e a voz tipográfica focada em conversão.</p>
                         </div>
 
                         <div className="space-y-4">
                             <div className="bg-zinc-900/70 p-5 rounded-2xl border border-zinc-800 shadow-sm flex items-center justify-between gap-4 focus-within:ring-2 focus-within:ring-lime-400/30 transition-all">
-                            <div className="flex-1">
-                                <label htmlFor="color-primary" className="text-[10px] font-black uppercase italic tracking-widest text-lime-400 block mb-1 cursor-pointer">Cor do Fundo</label>
-                            </div>
-                            <input id="color-primary" type="color" value={formData.primaryColor} onChange={(e) => setFormData({...formData, primaryColor: e.target.value})} className="w-12 h-12 bg-transparent cursor-pointer rounded-lg overflow-hidden shrink-0 outline-none" />
-                            </div>
-
-                            <div className="bg-zinc-900/40 p-5 rounded-2xl border border-zinc-800 flex items-center justify-between gap-4 focus-within:ring-2 focus-within:ring-lime-400/30 transition-all">
-                            <div className="flex-1">
-                                <label htmlFor="color-secondary" className="text-[10px] font-black uppercase italic tracking-widest text-zinc-300 block mb-1 cursor-pointer">Cor dos Botões (Efeito Vidro)</label>
-                            </div>
-                            <input id="color-secondary" type="color" value={formData.secondaryColor} onChange={(e) => setFormData({...formData, secondaryColor: e.target.value})} className="w-10 h-10 bg-transparent cursor-pointer shrink-0 outline-none" />
+                                <div className="flex-1">
+                                    <label htmlFor="color-primary" className="text-[10px] font-black uppercase italic tracking-widest text-lime-400 block mb-1 cursor-pointer">Fundo da Página</label>
+                                    <p className="text-[9px] text-zinc-500">A base do seu posicionamento.</p>
+                                </div>
+                                <input id="color-primary" type="color" value={formData.primaryColor} onChange={(e) => setFormData({...formData, primaryColor: e.target.value})} className="w-12 h-12 bg-transparent cursor-pointer rounded-lg overflow-hidden shrink-0 outline-none" />
                             </div>
 
                             <div className="bg-zinc-900/40 p-5 rounded-2xl border border-zinc-800 flex items-center justify-between gap-4 focus-within:ring-2 focus-within:ring-lime-400/30 transition-all">
-                            <div className="flex-1">
-                                <label htmlFor="color-accent" className="text-[10px] font-black uppercase italic tracking-widest text-zinc-300 block mb-1 cursor-pointer">Cor dos Acentos/Ícones</label>
+                                <div className="flex-1">
+                                    <label htmlFor="color-secondary" className="text-[10px] font-black uppercase italic tracking-widest text-zinc-300 block mb-1 cursor-pointer flex items-center gap-2">
+                                        Botões CTA <span className="bg-lime-400/10 text-lime-400 px-1.5 py-0.5 rounded text-[8px]">Conversão +34%</span>
+                                    </label>
+                                    <p className="text-[9px] text-zinc-500">Tons quentes e vibrantes guiam o clique.</p>
+                                </div>
+                                <input id="color-secondary" type="color" value={formData.secondaryColor} onChange={(e) => setFormData({...formData, secondaryColor: e.target.value})} className="w-10 h-10 bg-transparent cursor-pointer shrink-0 outline-none" />
                             </div>
-                            <input id="color-accent" type="color" value={formData.accentColor} onChange={(e) => setFormData({...formData, accentColor: e.target.value})} className="w-10 h-10 bg-transparent cursor-pointer shrink-0 outline-none" />
+
+                            <div className="bg-zinc-900/40 p-5 rounded-2xl border border-zinc-800 flex items-center justify-between gap-4 focus-within:ring-2 focus-within:ring-lime-400/30 transition-all">
+                                <div className="flex-1">
+                                    <label htmlFor="color-accent" className="text-[10px] font-black uppercase italic tracking-widest text-zinc-300 block mb-1 cursor-pointer">Cor de Acento (Detalhes)</label>
+                                    <p className="text-[9px] text-zinc-500">Destaques secundários e ícones.</p>
+                                </div>
+                                <input id="color-accent" type="color" value={formData.accentColor} onChange={(e) => setFormData({...formData, accentColor: e.target.value})} className="w-10 h-10 bg-transparent cursor-pointer shrink-0 outline-none" />
                             </div>
                         </div>
 
                         <div className="space-y-6 pt-4 border-t border-zinc-900">
                             <div>
-                            <label className="text-[10px] font-black uppercase italic text-zinc-500 block mb-3 tracking-widest flex items-center gap-2"><Icon name="heading" size={14} /> Tipografia de Títulos</label>
-                            <div className="grid grid-cols-2 gap-2 pr-2">
-                                {TITLE_FONTS.map(f => (
-                                <button key={f.id} onClick={() => setFormData({...formData, titleFont: f.id})} className={`p-3 rounded-xl border text-left transition-all outline-none focus:ring-2 focus:ring-lime-400/50 ${formData.titleFont === f.id ? 'border-lime-400 bg-lime-400/10' : 'border-zinc-800 bg-zinc-900/30 hover:border-zinc-600'}`}>
-                                    <div className={`font-black text-[11px] uppercase tracking-tighter ${formData.titleFont === f.id ? 'text-lime-400' : 'text-zinc-200'}`}>{f.name}</div>
-                                </button>
-                                ))}
-                            </div>
+                                <label className="text-[10px] font-black uppercase italic text-zinc-500 block mb-3 tracking-widest flex items-center gap-2"><Icon name="heading" size={14} /> Tipografia de Títulos</label>
+                                <div className="grid grid-cols-2 gap-2 pr-2">
+                                    {TITLE_FONTS.map(f => (
+                                    <button key={f.id} onClick={() => setFormData({...formData, titleFont: f.id})} className={`p-3 rounded-xl border text-left transition-all outline-none focus:ring-2 focus:ring-lime-400/50 flex flex-col justify-center h-[76px] ${formData.titleFont === f.id ? 'border-lime-400 bg-lime-400/10' : 'border-zinc-800 bg-zinc-900/30 hover:border-zinc-600'}`}>
+                                        <div className={`font-black text-[11px] uppercase tracking-tighter ${formData.titleFont === f.id ? 'text-lime-400' : 'text-zinc-200'}`}>{f.name}</div>
+                                        <div className="text-[8px] text-zinc-500 mt-1 italic">{f.neuro}</div>
+                                    </button>
+                                    ))}
+                                </div>
                             </div>
 
                             <div>
-                            <label className="text-[10px] font-black uppercase italic text-zinc-500 block mb-3 tracking-widest flex items-center gap-2"><Icon name="type" size={14} /> Tipografia de Textos</label>
-                            <div className="grid grid-cols-2 gap-2">
-                                {DESC_FONTS.map(f => (
-                                <button key={f.id} onClick={() => setFormData({...formData, descFont: f.id})} className={`p-3 rounded-xl border text-left transition-all outline-none focus:ring-2 focus:ring-lime-400/50 ${formData.descFont === f.id ? 'border-lime-400 bg-lime-400/10' : 'border-zinc-800 bg-zinc-900/30 hover:border-zinc-600'}`}>
-                                    <div className={`font-black text-[10px] uppercase tracking-tighter ${formData.descFont === f.id ? 'text-lime-400' : 'text-zinc-200'}`}>{f.name}</div>
-                                </button>
-                                ))}
-                            </div>
+                                <label className="text-[10px] font-black uppercase italic text-zinc-500 block mb-3 tracking-widest flex items-center gap-2"><Icon name="type" size={14} /> Tipografia de Textos (Leitura)</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {DESC_FONTS.map(f => (
+                                    <button key={f.id} onClick={() => setFormData({...formData, descFont: f.id})} className={`p-3 rounded-xl border text-left transition-all outline-none focus:ring-2 focus:ring-lime-400/50 flex flex-col justify-center h-[76px] ${formData.descFont === f.id ? 'border-lime-400 bg-lime-400/10' : 'border-zinc-800 bg-zinc-900/30 hover:border-zinc-600'}`}>
+                                        <div className={`font-black text-[10px] uppercase tracking-tighter ${formData.descFont === f.id ? 'text-lime-400' : 'text-zinc-200'}`}>{f.name}</div>
+                                        <div className="text-[8px] text-zinc-500 mt-1 italic">{f.neuro}</div>
+                                    </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
                         <div className="flex justify-between items-center pt-4 lg:pt-6 border-t border-zinc-900">
                             <button onClick={() => setStep(1)} className="text-zinc-500 hover:text-zinc-300 text-[10px] font-black uppercase italic focus:outline-none">Voltar</button>
-                            <button onClick={() => triggerHaptic(3)} className="px-8 lg:px-10 py-4 lg:py-5 bg-lime-400 text-black font-black rounded-2xl uppercase italic text-[10px] lg:text-xs shadow-lg shadow-lime-400/20 focus:ring-4 focus:ring-lime-400/30 outline-none">Definir Estrutura</button>
+                            <button onClick={() => triggerHaptic(3)} className="px-8 lg:px-10 py-4 lg:py-5 bg-lime-400 text-black font-black rounded-2xl uppercase italic text-[10px] lg:text-xs shadow-lg shadow-lime-400/20 focus:ring-4 focus:ring-lime-400/30 outline-none">Avançar Funil</button>
                         </div>
                         </div>
                     )}
@@ -757,7 +801,7 @@
 
                         <div className="flex justify-between items-center pt-6">
                             <button onClick={() => setStep(2)} className="text-zinc-500 hover:text-zinc-300 text-[10px] font-black uppercase italic focus:outline-none">Voltar</button>
-                            <button onClick={() => triggerHaptic(4)} className="px-8 lg:px-10 py-4 lg:py-5 bg-lime-400 text-black font-black rounded-2xl uppercase italic text-[10px] lg:text-xs shadow-lg shadow-lime-400/20 focus:ring-4 focus:ring-lime-400/30 outline-none">Construir Blocos</button>
+                            <button onClick={() => triggerHaptic(4)} className="px-8 lg:px-10 py-4 lg:py-5 bg-lime-400 text-black font-black rounded-2xl uppercase italic text-[10px] lg:text-xs shadow-lg shadow-lime-400/20 focus:ring-4 focus:ring-lime-400/30 outline-none">Construir Funil</button>
                         </div>
                         </div>
                     )}
@@ -766,77 +810,157 @@
                         <div className="space-y-8 lg:space-y-10 animate-in fade-in slide-in-from-right-8 duration-500 pb-12">
                         <div className="space-y-2">
                             <div className="inline-flex items-center gap-2 px-3 py-1 bg-lime-400/20 border border-lime-400/40 rounded-full text-[8px] lg:text-[9px] font-black text-lime-400 uppercase tracking-widest italic mb-2">
-                            <Icon name="layers" size={10} /> Arquitetura GLID
+                            <Icon name="layers" size={10} /> Arquitetura de Funil
                             </div>
-                            <h3 className="text-3xl lg:text-4xl font-black uppercase italic tracking-tighter text-zinc-100">04. Blocos</h3>
+                            <h3 className="text-3xl lg:text-4xl font-black uppercase italic tracking-tighter text-zinc-100">04. Blocos de Vendas</h3>
+                            <p className="text-zinc-400 text-xs italic">Organize o que entra no Topo, Meio e Fundo do seu funil digital.</p>
                         </div>
 
-                        {/* GERENCIADOR DE SERVIÇOS (Tabela Visual Reformulada) */}
-                        <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-6 mb-8 shadow-inner">
-                            <h4 className="text-sm font-black uppercase italic text-lime-400 mb-4 tracking-widest border-b border-zinc-800 pb-2">Tabela de Comando: Serviços</h4>
-                            <div className="space-y-3 mb-4 max-h-56 overflow-y-auto pr-2 no-scrollbar">
-                                {formData.services.map((srv, index) => (
-                                    <div key={srv.id} className="flex gap-2 items-center bg-black/40 p-2 rounded-xl border border-zinc-800 focus-within:border-lime-400/50 transition-colors group">
-                                        <div className="flex-1 flex flex-col gap-1">
-                                            <input 
-                                                type="text" 
-                                                placeholder="Ex: Corte, Liso 5D, Design..."
-                                                value={srv.title}
-                                                onChange={(e) => updateService(srv.id, 'title', e.target.value)}
-                                                className="bg-transparent border-b border-transparent hover:border-zinc-700 text-xs font-bold text-white px-2 py-1 focus:outline-none focus:border-lime-400 transition-colors uppercase w-full"
-                                                aria-label="Nome do Serviço"
-                                            />
-                                            <div className="flex items-center gap-1 px-2">
-                                                <span className="text-[10px] text-zinc-500 font-black">R$</span>
-                                                <input 
-                                                    type="number" 
-                                                    placeholder="Valor"
-                                                    value={srv.price}
-                                                    onChange={(e) => updateService(srv.id, 'price', e.target.value)}
-                                                    className="bg-transparent text-xs font-mono text-lime-400 py-1 focus:outline-none w-full"
-                                                    aria-label="Preço do Serviço"
-                                                    min="0"
-                                                />
+                        {/* MÓDULOS AGRUPADOS POR FUNIL */}
+                        <div className="space-y-8">
+                            
+                            {/* TOPO DE FUNIL */}
+                            <div className="space-y-3">
+                                <h5 className="text-[10px] font-black uppercase tracking-widest text-lime-400 flex items-center gap-2"><Icon name="zap" size={12} /> Topo de Funil (Atração)</h5>
+                                {FUNNEL_MODULES.filter(m => m.stage === 'topo').map(module => {
+                                    const isActive = formData.sections.includes(module.id);
+                                    return (
+                                        <button 
+                                            key={module.id} onClick={() => toggleSection(module.id)}
+                                            className={`w-full p-4 rounded-2xl border text-left transition-all flex items-center justify-between group outline-none focus:ring-2 focus:ring-lime-400/50 ${isActive ? 'border-lime-400 bg-lime-400/5 shadow-[0_0_15px_rgba(163,230,53,0.05)]' : 'border-zinc-800 bg-zinc-900/30 hover:border-zinc-600'}`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className={`p-2 rounded-xl transition-colors flex items-center justify-center ${isActive ? 'bg-lime-400 text-black shadow-md' : 'bg-zinc-800 text-zinc-400'}`}>
+                                                    <Icon name={module.icon} size={16} />
+                                                </div>
+                                                <div>
+                                                    <div className={`font-black text-[10px] uppercase tracking-widest italic transition-colors ${isActive ? 'text-zinc-100' : 'text-zinc-400 group-hover:text-zinc-200'}`}>{module.label}</div>
+                                                    <div className="text-[8px] text-zinc-500 mt-1">{module.desc}</div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <button onClick={() => removeService(srv.id)} className="p-3 text-zinc-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-red-500/50" aria-label="Remover Serviço">
-                                            <Icon name="trash" size={16} />
+                                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${isActive ? 'bg-lime-400 border-lime-400 text-black' : 'border-zinc-700 text-transparent'}`}>
+                                                <Icon name="check" size={12} strokeWidth={3} />
+                                            </div>
                                         </button>
-                                    </div>
-                                ))}
+                                    )
+                                })}
                             </div>
-                            <button onClick={addService} className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 hover:text-white text-zinc-300 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-zinc-500 shadow-md">
-                                <Icon name="plus" size={14} /> Adicionar Novo Serviço
-                            </button>
-                        </div>
 
-                        {/* SEÇÕES EXTRAS */}
-                        <div className="grid grid-cols-1 gap-3 lg:gap-4">
-                            {PAGE_MODULES.map(module => {
-                            const isActive = formData.sections.includes(module.id);
-                            return (
-                                <button 
-                                key={module.id}
-                                onClick={() => toggleSection(module.id)}
-                                className={`p-4 lg:p-5 rounded-2xl border text-left transition-all flex items-center justify-between group outline-none focus:ring-2 focus:ring-lime-400/50 ${isActive ? 'border-lime-400 bg-lime-400/5 shadow-[0_0_15px_rgba(163,230,53,0.05)]' : 'border-zinc-800 bg-zinc-900/30 hover:border-zinc-600'}`}
-                                >
-                                <div className="flex items-center gap-3 lg:gap-4">
-                                    <div className={`p-2 lg:p-3 rounded-xl transition-colors flex items-center justify-center ${isActive ? 'bg-lime-400 text-black shadow-md' : 'bg-zinc-800 text-zinc-400'}`}>
-                                      <Icon name={module.icon} size={16} />
+                            {/* MEIO DE FUNIL */}
+                            <div className="space-y-3">
+                                <h5 className="text-[10px] font-black uppercase tracking-widest text-lime-400 flex items-center gap-2"><Icon name="users" size={12} /> Meio de Funil (Conexão)</h5>
+                                {FUNNEL_MODULES.filter(m => m.stage === 'meio').map(module => {
+                                    const isActive = formData.sections.includes(module.id);
+                                    return (
+                                        <button 
+                                            key={module.id} onClick={() => toggleSection(module.id)}
+                                            className={`w-full p-4 rounded-2xl border text-left transition-all flex items-center justify-between group outline-none focus:ring-2 focus:ring-lime-400/50 ${isActive ? 'border-lime-400 bg-lime-400/5 shadow-[0_0_15px_rgba(163,230,53,0.05)]' : 'border-zinc-800 bg-zinc-900/30 hover:border-zinc-600'}`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className={`p-2 rounded-xl transition-colors flex items-center justify-center ${isActive ? 'bg-lime-400 text-black shadow-md' : 'bg-zinc-800 text-zinc-400'}`}>
+                                                    <Icon name={module.icon} size={16} />
+                                                </div>
+                                                <div>
+                                                    <div className={`font-black text-[10px] uppercase tracking-widest italic transition-colors ${isActive ? 'text-zinc-100' : 'text-zinc-400 group-hover:text-zinc-200'}`}>{module.label}</div>
+                                                    <div className="text-[8px] text-zinc-500 mt-1">{module.desc}</div>
+                                                </div>
+                                            </div>
+                                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${isActive ? 'bg-lime-400 border-lime-400 text-black' : 'border-zinc-700 text-transparent'}`}>
+                                                <Icon name="check" size={12} strokeWidth={3} />
+                                            </div>
+                                        </button>
+                                    )
+                                })}
+                            </div>
+
+                            {/* FUNDO DE FUNIL */}
+                            <div className="space-y-3">
+                                <h5 className="text-[10px] font-black uppercase tracking-widest text-lime-400 flex items-center gap-2"><Icon name="message" size={12} /> Fundo de Funil (Conversão)</h5>
+                                
+                                {/* TOGGLE WHATSAPP (Ação Direta) */}
+                                <div className="w-full p-4 rounded-2xl border border-zinc-800 bg-zinc-900/30 flex items-center justify-between group transition-all hover:border-zinc-600">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`p-2 rounded-xl transition-colors flex items-center justify-center ${formData.showWhatsapp ? 'bg-[#25D366] text-white shadow-md' : 'bg-zinc-800 text-zinc-400'}`}>
+                                            <Icon name="whatsapp" size={16} />
+                                        </div>
+                                        <div>
+                                            <div className="font-black text-[10px] uppercase tracking-widest italic text-zinc-100">Botão WhatsApp Flutuante</div>
+                                            <div className="text-[8px] text-zinc-500 mt-1">Converte dúvidas rapidamente.</div>
+                                        </div>
                                     </div>
-                                    <span className={`font-black text-[10px] lg:text-xs uppercase tracking-widest italic transition-colors ${isActive ? 'text-zinc-100' : 'text-zinc-400 group-hover:text-zinc-200'}`}>
-                                    {module.label}
-                                    </span>
+                                    
+                                    {/* Toggle Switch */}
+                                    <div className="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                                        <input type="checkbox" name="toggle" id="whatsapp-toggle" checked={formData.showWhatsapp} onChange={() => setFormData({...formData, showWhatsapp: !formData.showWhatsapp})} className="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 border-zinc-500 appearance-none cursor-pointer z-10 top-0 left-0 transition-all duration-300 outline-none" />
+                                        <label htmlFor="whatsapp-toggle" className="toggle-label block overflow-hidden h-5 rounded-full bg-zinc-700 cursor-pointer transition-colors duration-300"></label>
+                                    </div>
                                 </div>
-                                <div className={`w-5 h-5 lg:w-6 lg:h-6 rounded-full border flex items-center justify-center transition-colors ${isActive ? 'bg-lime-400 border-lime-400 text-black' : 'border-zinc-700 text-transparent'}`}>
-                                    <Icon name="check" size={12} strokeWidth={3} />
+
+                                {FUNNEL_MODULES.filter(m => m.stage === 'fundo').map(module => {
+                                    const isActive = formData.sections.includes(module.id);
+                                    return (
+                                        <button 
+                                            key={module.id} onClick={() => toggleSection(module.id)}
+                                            className={`w-full p-4 rounded-2xl border text-left transition-all flex items-center justify-between group outline-none focus:ring-2 focus:ring-lime-400/50 ${isActive ? 'border-lime-400 bg-lime-400/5 shadow-[0_0_15px_rgba(163,230,53,0.05)]' : 'border-zinc-800 bg-zinc-900/30 hover:border-zinc-600'}`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className={`p-2 rounded-xl transition-colors flex items-center justify-center ${isActive ? 'bg-lime-400 text-black shadow-md' : 'bg-zinc-800 text-zinc-400'}`}>
+                                                    <Icon name={module.icon} size={16} />
+                                                </div>
+                                                <div>
+                                                    <div className={`font-black text-[10px] uppercase tracking-widest italic transition-colors ${isActive ? 'text-zinc-100' : 'text-zinc-400 group-hover:text-zinc-200'}`}>{module.label}</div>
+                                                    <div className="text-[8px] text-zinc-500 mt-1">{module.desc}</div>
+                                                </div>
+                                            </div>
+                                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${isActive ? 'bg-lime-400 border-lime-400 text-black' : 'border-zinc-700 text-transparent'}`}>
+                                                <Icon name="check" size={12} strokeWidth={3} />
+                                            </div>
+                                        </button>
+                                    )
+                                })}
+
+                                {/* GERENCIADOR DE SERVIÇOS */}
+                                <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-5 mt-4 shadow-inner">
+                                    <h4 className="text-[10px] font-black uppercase italic text-lime-400 mb-3 tracking-widest">Tabela de Comando: Serviços</h4>
+                                    <div className="space-y-3 mb-4 max-h-56 overflow-y-auto pr-2 no-scrollbar">
+                                        {formData.services.map((srv, index) => (
+                                            <div key={srv.id} className="flex gap-2 items-center bg-black/40 p-2 rounded-xl border border-zinc-800 focus-within:border-lime-400/50 transition-colors group">
+                                                <div className="flex-1 flex flex-col gap-1">
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="Ex: Corte, Liso 5D, Design..."
+                                                        value={srv.title}
+                                                        onChange={(e) => updateService(srv.id, 'title', e.target.value)}
+                                                        className="bg-transparent border-b border-transparent hover:border-zinc-700 text-xs font-bold text-white px-2 py-1 focus:outline-none focus:border-lime-400 transition-colors uppercase w-full"
+                                                        aria-label="Nome do Serviço"
+                                                    />
+                                                    <div className="flex items-center gap-1 px-2">
+                                                        <span className="text-[10px] text-zinc-500 font-black">R$</span>
+                                                        <input 
+                                                            type="number" 
+                                                            placeholder="Valor"
+                                                            value={srv.price}
+                                                            onChange={(e) => updateService(srv.id, 'price', e.target.value)}
+                                                            className="bg-transparent text-xs font-mono text-lime-400 py-1 focus:outline-none w-full"
+                                                            aria-label="Preço do Serviço"
+                                                            min="0"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <button onClick={() => removeService(srv.id)} className="p-3 text-zinc-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-red-500/50" aria-label="Remover Serviço">
+                                                    <Icon name="trash" size={16} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <button onClick={addService} className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 hover:text-white text-zinc-300 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-zinc-500 shadow-md">
+                                        <Icon name="plus" size={14} /> Adicionar Serviço
+                                    </button>
                                 </div>
-                                </button>
-                            );
-                            })}
+                            </div>
                         </div>
 
-                        <div className="flex justify-between items-center pt-6 lg:pt-8 border-t border-zinc-900">
+                        <div className="flex justify-between items-center pt-6 lg:pt-8 border-t border-zinc-900 mt-8">
                             <button onClick={() => setStep(3)} className="text-zinc-500 hover:text-zinc-300 text-[10px] font-black uppercase italic focus:outline-none">Voltar</button>
                             <button onClick={() => triggerHaptic(5)} className="px-8 lg:px-10 py-4 lg:py-5 bg-white text-black font-black rounded-2xl uppercase italic text-[10px] lg:text-xs shadow-xl focus:ring-4 focus:ring-white/30 outline-none">Revisar & Finalizar</button>
                         </div>
@@ -850,7 +974,7 @@
                         </div>
                         <h3 className="text-4xl lg:text-[3.5rem] leading-[0.9] font-black italic uppercase tracking-tighter text-zinc-100">Posicionamento <br/> Concluído.</h3>
                         <p className="text-zinc-400 max-w-[280px] mx-auto text-xs lg:text-sm italic leading-relaxed">
-                            Design System e Planta Baixa definidos no padrão GL Pro.
+                            Design System e Estrutura de Funil definidos no padrão GL Pro.
                         </p>
                         
                         <button 
@@ -861,7 +985,7 @@
                             {isExporting ? (
                                 <React.Fragment> <Icon name="refresh" size={16} className="animate-spin" /> Gerando Blueprint... </React.Fragment>
                             ) : (
-                                <React.Fragment> <Icon name="download" size={16} /> Exportar GLID JSON </React.Fragment>
+                                <React.Fragment> <Icon name="download" size={16} /> Exportar Arquivo JSON </React.Fragment>
                             )}
                         </button>
                         </div>
